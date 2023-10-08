@@ -5,6 +5,9 @@ from typing import NamedTuple
 from PyQt5.QtCore import QSize, Qt, pyqtSignal
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QGridLayout, QHBoxLayout, QLabel, QVBoxLayout
+import vlc
+from PyQt5.QtGui import QKeySequence
+from PyQt5.QtWidgets import QShortcut
 
 from gridplayer.dialogs.input_dialog import QCustomSpinboxInput
 from gridplayer.models.grid_state import GridState
@@ -59,6 +62,8 @@ class GridManager(ManagerBase):
         self._grid.setSpacing(0)
         self._grid.setContentsMargins(0, 0, 0, 0)
 
+		self._player.video_set_scale(0)
+		
         self._info_label = QLabel(
             translate("Main Window", "Drag and drop media files or URLs here"),
             parent=self.parent(),
@@ -69,6 +74,23 @@ class GridManager(ManagerBase):
         font = QFont("Hack", FONT_SIZE_BIG_INFO, QFont.Bold)
         self._info_label.setFont(font)
 
+		self.x = 0
+		self.y = 0
+		self.width = self.player.get_media().get_mrl().video_get_width()
+		self.height = self.player.get_media().get_mrl().video_get_height()
+		
+		QShortcut(QKeySequence("u"), self, self.increase_x)
+		QShortcut(QKeySequence("Shift+u"), self, self.decrease_x)
+		
+		QShortcut(QKeySequence("i"), self, self.increase_y)
+		QShortcut(QKeySequence("Shift+i"), self, self.decrease_y)
+		
+		QShortcut(QKeySequence("o"), self, self.increase_width)
+		QShortcut(QKeySequence("Shift+o"), self, self.decrease_width)
+		
+		QShortcut(QKeySequence("p"), self, self.increase_height)
+		QShortcut(QKeySequence("Shift+p"), self, self.decrease_height)
+		
     def init(self):
         self.minimum_size_changed.emit(self._minimum_size)
         self.reload_video_grid()
@@ -286,7 +308,45 @@ class GridManager(ManagerBase):
 
         self._grid.addLayout(last_row, 0, last_col_num, -1, 1)
 
-    def _minimum_vb_size(self):
+	def increase_x(self):
+		self.x += 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+
+	def decrease_x(self):
+		self.x -= 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+
+	def increase_y(self):
+		self.y += 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+
+	def decrease_y(self):
+		self.y -= 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+	
+	def increase_width(self):
+		self.width += 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+	
+	def decrease_width(self):
+		self.width -= 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+
+	def increase_height(self):
+		self.height += 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+
+	def decrease_height(self):
+		self.height -= 1
+		self.set_zoom(self.x, self.y, self.width, self.height)
+
+   def reset_values(self):
+		self.x = 0
+		self.y = 0
+		self.width = self.player.get_media().get_mrl().video_get_width()
+		self.height = self.player.get_media().get_mrl().video_get_height()
+
+   def _minimum_vb_size(self):
         return QSize(
             self._minimum_size.width() // self.grid_dimensions.cols,
             self._minimum_size.height() // self.grid_dimensions.rows,

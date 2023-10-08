@@ -6,6 +6,9 @@ from time import time
 from types import MappingProxyType
 from typing import Optional
 
+import vlc
+
+
 from gridplayer.params import env
 from gridplayer.params.static import VIDEO_END_LOOP_MARGIN_MS, AudioChannelMode
 from gridplayer.settings import Settings
@@ -92,6 +95,20 @@ class VlcPlayerBase(ABC):
         self.init_event_manager()
 
         self._log = logging.getLogger(self.__class__.__name__)
+		
+		self.x = 0
+		self.y = 0
+		self.width = self.video.get_width()
+		self.height = self.video.get_height()
+		
+		self.bind('<u>', lambda _: self.set_interactive_zoom(self.x + 1, self.y, self.width, self.height))
+		self.bind('<i>', lambda _: self.set_interactive_zoom(self.x, self.y + 1, self.width, self.height))
+		self.bind('<o>', lambda _: self.set_interactive_zoom(self.x, self.y, self.width + 1, self.height))
+		self.bind('<p>', lambda _: self.set_interactive_zoom(self.x, self.y, self.width, self.height + 1))
+		self.bind('<Shift-u>', lambda _: self.set_interactive_zoom(self.x - 1, self.y, self.width, self.height))
+		self.bind('<Shift-i>', lambda _: self.set_interactive_zoom(self.x, self.y - 1, self.width, self.height))
+		self.bind('<Shift-o>', lambda _: self.set_interactive_zoom(self.x, self.y, self.width - 1, self.height))
+		self.bind('<Shift-p>', lambda _: self.set_interactive_zoom(self.x, self.y, self.width, self.height - 1))
 
     @property
     def init_time_left(self) -> int:
@@ -494,6 +511,50 @@ class VlcPlayerBase(ABC):
         volume = int(volume_percent * 100)
 
         self._media_player.audio_set_volume(volume)
+	
+	@only_initialized_player	
+	def set_zoom(self, x, y, width, height):
+    self.video.video_set_crop_geometry(f"{width}x{height}+{x}+{y}")
+	
+    @only_initialized_player	
+	def increase_x(self):
+    self.x += 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player
+	def decrease_x(self):
+    self.x -= 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player	
+	def increase_y(self):
+    self.y += 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player
+	def decrease_y(self):
+    self.y -= 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player		
+	def increase_width(self):
+    self.width += 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player
+	def decrease_width(self):
+    self.width -= 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player	
+	def increase_height(self):
+    self.height += 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
+	
+    @only_initialized_player
+	def decrease_height(self):
+    self.height -= 1
+    self.set_zoom(self.x, self.y, self.width, self.height)
 
     @only_initialized_player
     def set_audio_track(self, track_id):

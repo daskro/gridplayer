@@ -1,6 +1,7 @@
 from PyQt5.QtCore import pyqtSignal
 from PyQt5.QtWidgets import QWidget
 
+import keyboard
 from gridplayer.params import env
 from gridplayer.player.manager import ManagersManager
 from gridplayer.player.managers.actions import ActionsManager
@@ -56,7 +57,21 @@ class Player(QWidget, ManagersManager):
             "actions": ActionsManager,
             "menu": MenuManager,
         }
+		
+		self.x = 0
+		self.y = 0
+		self.width = self.player.video_get_width()
+		self.height = self.player.video_get_height()
 
+		keyboard.add_hotkey('u', lambda: self.increase_value('x'))
+		keyboard.add_hotkey('i', lambda: self.increase_value('y'))
+		keyboard.add_hotkey('o', lambda: self.increase_value('width'))
+		keyboard.add_hotkey('p', lambda: self.increase_value('height'))
+		
+		keyboard.add_hotkey('shift + u', lambda: self.decrease_value('x'))
+		keyboard.add_hotkey('shift + i', lambda: self.decrease_value('y'))
+		keyboard.add_hotkey('shift + o', lambda: self.decrease_value('width'))
+		keyboard.add_hotkey('shift + p', lambda: self.decrease_value('height'))
         self.connections = {
             "window_state": [
                 ("pause_on_minimize", "video_blocks.cmd_all_pause"),
@@ -158,3 +173,15 @@ class Player(QWidget, ManagersManager):
 
     def process_arguments(self, argv):
         self.arguments_received.emit(argv)
+		
+		
+	def increase_value(self, attribute):
+		setattr(self, attribute, getattr(self, attribute) + 1)
+		self.apply_zoom()
+
+	def decrease_value(self, attribute):
+		setattr(self, attribute, getattr(self, attribute) - 1)
+		self.apply_zoom()
+		
+	def apply_zoom(self):
+		self.player.video_set_crop_geometry(f"{self.width}x{self.height}+{self.x}+{self.y}")
